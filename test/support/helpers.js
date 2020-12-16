@@ -198,7 +198,9 @@ module.exports = {
       .getQueryInterface()
       .showAllTables()
       .then(function (tables) {
-        return callback(tables.sort());
+        return support.getTestDialect() === 'mariadb'
+          ? callback(tables.map((t) => t.tableName).sort())
+          : callback(tables.sort());
       });
   },
 

@@ -124,7 +124,7 @@ const _ = require('lodash');
         prepare(
           () => {
             helpers.readTables(self.sequelize, (tables) => {
-              expect(tables.sort()).to.eql(['Person', 'SequelizeMeta', 'Task']);
+              expect(tables).to.eql(['Person', 'SequelizeMeta', 'Task']);
               done();
             });
           },
@@ -141,7 +141,7 @@ const _ = require('lodash');
         prepare(
           () => {
             helpers.readTables(self.sequelize, (tables) => {
-              expect(tables.sort()).to.contain('Comment');
+              expect(tables).to.contain('Comment');
               done();
             });
           },
@@ -158,7 +158,7 @@ const _ = require('lodash');
         prepare(
           () => {
             helpers.readTables(self.sequelize, (tables) => {
-              expect(tables.sort()).to.contain('Typescript');
+              expect(tables).to.contain('Typescript');
               done();
             });
           },
@@ -175,7 +175,7 @@ const _ = require('lodash');
         prepare(
           () => {
             helpers.readTables(self.sequelize, (tables) => {
-              expect(tables.sort()).to.not.contain('TypescriptDS');
+              expect(tables).to.not.contain('TypescriptDS');
               done();
             });
           },
@@ -193,11 +193,7 @@ const _ = require('lodash');
         prepare(
           () => {
             helpers.readTables(self.sequelize, (tables) => {
-              expect(tables.sort()).to.eql([
-                'Person',
-                'Task',
-                'sequelize_meta',
-              ]);
+              expect(tables).to.eql(['Person', 'Task', 'sequelize_meta']);
               done();
             });
           },
@@ -210,37 +206,43 @@ const _ = require('lodash');
     });
 
     describe('custom meta schema', () => {
-      it('correctly uses the defined schema', function (done) {
-        prepare(
-          () => {
-            if (Support.dialectIsPostgres()) {
-              helpers.readSchemas(this.sequelize, (schemas) => {
-                expect(schemas.sort()).to.eql(['sequelize_schema']);
+      if (Support.getTestDialect() === 'mariadb')
+        // MariaDB cannot use a non-existing schema.
+        it('cannot use a non-existing schema', function () {
+          expect(true);
+        });
+      else
+        it('correctly uses the defined schema', function (done) {
+          prepare(
+            () => {
+              if (Support.dialectIsPostgres()) {
+                helpers.readSchemas(this.sequelize, (schemas) => {
+                  expect(schemas.sort()).to.eql(['sequelize_schema']);
 
-                // Tables from public should still be the same.
+                  // Tables from public should still be the same.
+                  helpers.readTables(this.sequelize, (tables) => {
+                    expect(tables).to.eql(['Person', 'Task']);
+                    done();
+                  });
+                });
+              } else {
+                // If not Postgres, the schema option gets prepended to the table name.
                 helpers.readTables(this.sequelize, (tables) => {
-                  expect(tables.sort()).to.eql(['Person', 'Task']);
+                  expect(tables).to.eql([
+                    'Person',
+                    'Task',
+                    'sequelize_schema.SequelizeMeta',
+                  ]);
                   done();
                 });
-              });
-            } else {
-              // If not Postgres, the schema option gets prepended to the table name.
-              helpers.readTables(this.sequelize, (tables) => {
-                expect(tables.sort()).to.eql([
-                  'Person',
-                  'Task',
-                  'sequelize_schema.SequelizeMeta',
-                ]);
-                done();
-              });
+              }
+            },
+            {
+              migrationFile: 'new/*createPerson',
+              config: { migrationStorageTableSchema: 'sequelize_schema' },
             }
-          },
-          {
-            migrationFile: 'new/*createPerson',
-            config: { migrationStorageTableSchema: 'sequelize_schema' },
-          }
-        );
-      });
+          );
+        });
     });
   });
 });

@@ -107,7 +107,7 @@ const _ = require('lodash');
         prepare(
           () => {
             helpers.readTables(self.sequelize, (tables) => {
-              expect(tables.sort()).to.eql([
+              expect(tables).to.eql([
                 'Person',
                 'SequelizeMeta',
                 'sequelize_data',

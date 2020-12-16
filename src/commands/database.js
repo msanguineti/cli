@@ -1,16 +1,15 @@
-import { _baseOptions } from '../core/yargs';
-import { logMigrator } from '../core/migrator';
-
-import helpers from '../helpers';
-import { cloneDeep, defaults, pick } from 'lodash';
 import clc from 'cli-color';
+import { cloneDeep, defaults, pick } from 'lodash';
+import { logMigrator } from '../core/migrator';
+import { _baseOptions } from '../core/yargs';
+import helpers from '../helpers';
 
 const Sequelize = helpers.generic.getSequelize();
 
 exports.builder = (yargs) =>
   _baseOptions(yargs)
     .option('charset', {
-      describe: 'Pass charset option to dialect, MYSQL only',
+      describe: 'Pass charset option to dialect, MYSQL/MariaDB only',
       type: 'string',
     })
     .option('collate', {
@@ -109,6 +108,7 @@ function getCreateDatabaseQuery(sequelize, config, options) {
       );
 
     case 'mysql':
+    case 'mariadb':
       return (
         'CREATE DATABASE IF NOT EXISTS ' +
         queryGenerator.quoteIdentifier(config.database) +
@@ -163,6 +163,7 @@ function getDatabaseLessSequelize() {
       break;
 
     case 'mysql':
+    case 'mariadb':
       delete config.database;
       break;
 
